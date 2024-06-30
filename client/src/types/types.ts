@@ -1,3 +1,5 @@
+import { JoystickShape } from "react-joystick-component";
+
 type JoystickDirection = "FORWARD" | "RIGHT" | "LEFT" | "BACKWARD";
 
 export interface IJoystickProps {
@@ -28,3 +30,5 @@ export interface IJoystickUpdateEvent {
   direction: JoystickDirection | null;
   distance: number; // Percentile 0-100% of joystick
 }
+
+export type MotorSpeed = number | null;
