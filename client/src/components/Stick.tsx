@@ -20,13 +20,13 @@ const Stick = ({ variant, setMotorSpeed }: StickProps) => {
   const handleStop = (e: IJoystickUpdateEvent) => {
     console.log(`${variant} stopped :`, e);
 
-    setMotorSpeed(null);
+    setMotorSpeed(0);
   };
 
   return (
     <Box>
       <Joystick
-        size={120}
+        size={110}
         throttle={50}
         controlPlaneShape={
           variant === "x" ? JoystickShape.AxisX : JoystickShape.AxisY

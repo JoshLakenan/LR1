@@ -3,13 +3,15 @@ import Box from "@mui/material/Box";
 import Slider from "@mui/material/Slider";
 import { Typography } from "@mui/material";
 
-export default function SpeedSlider({
+const SettingSlider = ({
   title,
   value,
+  sliderColor,
 }: {
   title: string;
   value: number;
-}) {
+  sliderColor: string;
+}) => {
   function preventHorizontalKeyboardNavigation(event: React.KeyboardEvent) {
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
@@ -17,18 +19,15 @@ export default function SpeedSlider({
   }
 
   return (
-    <Box sx={{ height: "200px" }}>
+    <Box sx={{ height: "200px", width: "100px" }}>
       <Typography color="white" id="vertical-slider" gutterBottom>
         {title}
       </Typography>
       <Slider
         sx={{
-          '& input[type="range"]': {
-            WebkitAppearance: "slider-vertical",
-          },
-          margin: "10px",
+          color: sliderColor, // Add this line to make the slider orange
         }}
-        orientation="vertical"
+        orientation="horizontal"
         defaultValue={value}
         aria-label="Temperature"
         valueLabelDisplay="auto"
@@ -36,4 +35,6 @@ export default function SpeedSlider({
       />
     </Box>
   );
-}
+};
+
+export default SettingSlider;
