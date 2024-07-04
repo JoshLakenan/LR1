@@ -32,7 +32,7 @@ async def handler(websocket, path):
             x = data.get('x', 0)  # Default to 0 if 'x' is not present
             y = data.get('y', 0)  # Default to 0 if 'y' is not present
 
-            print(f"x: {x}, y: {y}")
+            print(f"Recieved: x: {x} y: {y}")
             
             # Update motor state based on received values
             # update_motor_state(x, y)
@@ -47,6 +47,10 @@ async def handler(websocket, path):
     except websockets.ConnectionClosed as e:
         # Print a message indicating the client has disconnected.
         print(f"Client disconnected: {e}")
+
+    finally:
+        # This block is always executed after the try block, ensuring cleanup happens
+        print(f"Connection to {websocket.remote_address} closed.")
 
 # Define an asynchronous function 'main' that will start the WebSocket server.
 async def main():
@@ -64,6 +68,19 @@ async def main():
     server.close()
     await server.wait_closed()
     print("WebSocket server stopped")
+
+
+# # Example usage
+# x = 1  # Full right turn
+# y = 1  # Full forward throttle
+# motor_speeds = easy_tank_drive(x, y)
+# print(motor_speeds)  # Output: {'left_motor_speed': 1, 'right_motor_speed': 0.5}
+
+# x = 1  # Full right turn
+# y = 0  # No forward throttle
+# motor_speeds = easy_tank_drive(x, y)
+# print(motor_speeds)  # Output: {'left_motor_speed': 1, 'right_motor_speed': -1}
+
 
 # Check if this script is being run directly (as opposed to being imported as a module).
 if __name__ == "__main__":
