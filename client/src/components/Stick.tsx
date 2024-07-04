@@ -4,23 +4,23 @@ import { IJoystickUpdateEvent, MotorSpeed } from "../types/types";
 
 interface StickProps {
   variant: "x" | "y";
-  setMotorSpeed: React.Dispatch<React.SetStateAction<MotorSpeed>>;
+  setStickState: React.Dispatch<React.SetStateAction<MotorSpeed>>;
 }
 
-const Stick = ({ variant, setMotorSpeed }: StickProps) => {
+const Stick = ({ variant, setStickState }: StickProps) => {
   const handleMove = (e: IJoystickUpdateEvent) => {
     if (variant === "x") {
-      // set the motor speed, and assert that e.x is not null
-      setMotorSpeed(e.x!);
+      // set the stick State, and assert that e.x is not null
+      setStickState(e.x!);
     } else {
-      setMotorSpeed(e.y!);
+      setStickState(e.y!);
     }
   };
 
   const handleStop = (e: IJoystickUpdateEvent) => {
     console.log(`${variant} stopped :`, e);
 
-    setMotorSpeed(0);
+    setStickState(0);
   };
 
   return (

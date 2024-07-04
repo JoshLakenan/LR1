@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import SettingSlider from "../components/SettingSlider";
+import LabeledToggle from "../components/LabeledToggle";
 import Connection from "../components/Connection";
 import Stick from "../components/Stick";
 import StickOutputDisplay from "../components/StickOutputDisplay";
@@ -13,31 +14,38 @@ import {
   FormControlLabel,
   FormGroup,
 } from "@mui/material";
-import { MotorSpeed } from "../types/types";
-import Header from "../components/Header";
+import { normalDrive } from "../utils/motorSpeeds";
+import { RobotScene } from "../components/Robot";
 
 const ControllerPage = () => {
-  const [x, setX] = useState<MotorSpeed>(0);
-  const [y, setY] = useState<MotorSpeed>(0);
+  const [leftStick, setLeftStick] = useState<number>(0);
+  const [rightStick, setRightStick] = useState<number>(0);
+
+  const [leftMotor, setLeftMotor] = useState<number>(0);
+  const [rightMotor, setRightMotor] = useState<number>(0);
+
   const [volume, setVolume] = useState<number>(10);
   const [speed, setSpeed] = useState<number>(50);
+
+  const [status, setStatus] = useState<string>("Disconnected");
+
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [connectIsChecked, setConnectIsChecked] = useState<boolean>(false);
-  const [status, setStatus] = useState<string>("disconnected");
-  const [error, setError] = useState<string | null>(null);
+  const [showRobot, setShowRobot] = useState<boolean>(false);
+  const [tankDrive, setTankDrive] = useState<boolean>(false);
 
   // Create a WebSocket reference
   const ws = useRef<WebSocket | null>(null);
 
   const connectWebSocket = () => {
     // Create a new WebSocket connection
-    ws.current = new WebSocket("ws://localhost:8765");
+    ws.current = new WebSocket("ws://192.168.12.155:3001/ws");
 
     // Set up WebSocket event listeners
     ws.current.onopen = () => {
       console.log("WebSocket connection established");
       setIsConnected(true);
-      setStatus("connected");
+      setStatus("Connected");
       setConnectIsChecked(true);
     };
 
@@ -48,7 +56,7 @@ const ControllerPage = () => {
     ws.current.onclose = () => {
       console.log("WebSocket connection closed");
       setIsConnected(false);
-      setStatus("disconnected");
+      setStatus("Disconnected");
       setConnectIsChecked(false);
     };
   };
@@ -61,8 +69,9 @@ const ControllerPage = () => {
     }
   };
 
-  const handleToggle = (_, checked: boolean) => {
+  const handleConnectionToggle = (_, checked: boolean) => {
     if (checked) {
+      console.log("Connecting to WebSocket");
       setConnectIsChecked(true);
       connectWebSocket();
     } else {
@@ -81,15 +90,27 @@ const ControllerPage = () => {
   }, []);
 
   useEffect(() => {
+    // Adjust motor speeds based on the speed value as a percentage
+    const adjustedRight = rightStick! * (speed / 100);
+    const adjustedLeft = leftStick! * (speed / 100);
+
+    const motorSpeeds = normalDrive(adjustedRight!, adjustedLeft!);
+
+    setRightMotor(motorSpeeds.right);
+    setLeftMotor(motorSpeeds.left);
+
     // Send WebSocket message whenever x or y changes
     if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-      const message = JSON.stringify({ x, y });
+      const message = JSON.stringify({
+        x: motorSpeeds.left,
+        y: motorSpeeds.right,
+      });
       ws.current.send(message);
       console.log(`Sent message: ${message}`);
     } else {
       console.log("WebSocket connection not established");
     }
-  }, [x, y]);
+  }, [rightStick, leftStick]);
 
   return (
     <Box
@@ -99,31 +120,85 @@ const ControllerPage = () => {
         flexDirection: "column",
         justifyContent: "space-between",
         alignItems: "center",
-        height: "100%",
+        backgroundColor: "#2b2a2a",
         width: "100%",
-        // border: "1px solid black",
       }}
     >
-      <Header message={"LR1 Controller"} />
-      <Connection
-        handleToggle={handleToggle}
-        status={status}
-        connectIsChecked={connectIsChecked}
-      />
-      <StickOutputDisplay x={x} y={y} />
+      <Box
+        id={"toggle-container"}
+        sx={{
+          display: "flex",
+          backgroundColor: "grey",
+          justifyContent: "space-between",
+          alignItems: "center",
+          width: "80%",
+          margin: "10px",
+          padding: "10px",
+          borderRadius: "10px",
+        }}
+      >
+        <LabeledToggle
+          checked={connectIsChecked}
+          handleToggle={handleConnectionToggle}
+          label={status}
+        />
+        <LabeledToggle
+          checked={showRobot}
+          handleToggle={() => setShowRobot(!showRobot)}
+          label={showRobot ? "Hide Robot" : "Show Robot"}
+        />
+        <LabeledToggle
+          checked={tankDrive}
+          handleToggle={() => setTankDrive(!tankDrive)}
+          label={tankDrive ? "Tank Drive On" : "Tank Drive Off"}
+        />
+      </Box>
+      {showRobot ? (
+        <RobotScene rightMotorSpeed={rightMotor} leftMotorSpeed={leftMotor} />
+      ) : (
+        <Box
+          id={"output-container"}
+          sx={{
+            marginTop: "20px",
+            height: "420px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "space-around",
+          }}
+        >
+          <StickOutputDisplay
+            title={"Stick Inputs"}
+            values={{ leftStick, rightStick }}
+          />
+          <StickOutputDisplay
+            title={"Motor Speeds"}
+            values={{ leftMotor, rightMotor }}
+          />
+        </Box>
+      )}
       <Box
         id={"settings-container"}
         sx={{
           display: "flex",
-          flexDirection: "column",
           justifyContent: "space-between",
           alignItems: "center",
           width: "75%",
-          height: "150px",
+          height: "100px",
         }}
       >
-        <SettingSlider title={"Volume"} value={10} sliderColor="orange" />
-        <SettingSlider title={"Speed"} value={50} sliderColor="green" />
+        <SettingSlider
+          title={"Volume"}
+          value={10}
+          sliderColor="orange"
+          setValue={setVolume}
+        />
+        <SettingSlider
+          title={"Speed"}
+          value={50}
+          sliderColor="green"
+          setValue={setSpeed}
+        />
       </Box>
 
       <Box
@@ -133,14 +208,14 @@ const ControllerPage = () => {
           width: "75%",
           justifyContent: "space-between",
           AlignItems: "center",
-          marginTop: "75px",
+          marginTop: "60px",
           marginLeft: "40px",
           marginRight: "40px",
           marginBottom: "75px",
         }}
       >
-        <Stick variant={"y"} setMotorSpeed={setY} />
-        <Stick variant={"x"} setMotorSpeed={setX} />
+        <Stick variant={"y"} setStickState={setLeftStick} />
+        <Stick variant={tankDrive ? "y" : "x"} setStickState={setRightStick} />
       </Box>
     </Box>
   );

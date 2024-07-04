@@ -2,11 +2,11 @@ import React from "react";
 import { Box, Typography } from "@mui/material";
 
 interface StickOutputDisplayProps {
-  x: number | null;
-  y: number | null;
+  title: string;
+  values: { [key: string]: number | null };
 }
 
-const StickOutputDisplay = ({ x, y }: StickOutputDisplayProps) => {
+const StickOutputDisplay = ({ title, values }: StickOutputDisplayProps) => {
   return (
     <Box
       id="stick-output"
@@ -22,12 +22,15 @@ const StickOutputDisplay = ({ x, y }: StickOutputDisplayProps) => {
       }}
     >
       <Typography variant="h5" color={"white"}>
-        Stick Input:
+        {title}:
       </Typography>
-      <Typography variant="h5" color={"white"}>
-        X: {x === null ? "0.00" : x.toFixed(2)} Y :{" "}
-        {y === null ? "0.00" : y.toFixed(2)}
-      </Typography>
+      {Object.keys(values).map((key) => {
+        return (
+          <Typography variant="h5" color={"white"}>
+            {key}: {values[key] === null ? "0.00" : values[key].toFixed(2)}
+          </Typography>
+        );
+      })}
     </Box>
   );
 };
