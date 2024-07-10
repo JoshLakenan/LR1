@@ -14,7 +14,7 @@ import {
   FormControlLabel,
   FormGroup,
 } from "@mui/material";
-import { normalDrive } from "../utils/motorSpeeds";
+import { normalDrive, tankDrive } from "../utils/motorSpeeds";
 import { RobotScene } from "../components/Robot";
 
 const ControllerPage = () => {
@@ -27,26 +27,24 @@ const ControllerPage = () => {
   const [volume, setVolume] = useState<number>(10);
   const [speed, setSpeed] = useState<number>(50);
 
-  const [status, setStatus] = useState<string>("Disconnected");
-
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const [connectIsChecked, setConnectIsChecked] = useState<boolean>(false);
   const [showRobot, setShowRobot] = useState<boolean>(false);
-  const [tankDrive, setTankDrive] = useState<boolean>(false);
+  const [tankMode, setTankMode] = useState<boolean>(false);
+  const [wsAddress, setWSAddress] = useState<string>("192.168.12.155:3001/ws");
 
   // Create a WebSocket reference
   const ws = useRef<WebSocket | null>(null);
 
   const connectWebSocket = () => {
     // Create a new WebSocket connection
-    ws.current = new WebSocket("ws://192.168.12.155:3001/ws");
+    ws.current = new WebSocket(`ws://${wsAddress}`);
 
     // Set up WebSocket event listeners
     ws.current.onopen = () => {
       console.log("WebSocket connection established");
-      setIsConnected(true);
-      setStatus("Connected");
       setConnectIsChecked(true);
+      setIsConnected(true);
     };
 
     ws.current.onmessage = (event) => {
@@ -56,7 +54,6 @@ const ControllerPage = () => {
     ws.current.onclose = () => {
       console.log("WebSocket connection closed");
       setIsConnected(false);
-      setStatus("Disconnected");
       setConnectIsChecked(false);
     };
   };
@@ -94,7 +91,9 @@ const ControllerPage = () => {
     const adjustedRight = rightStick! * (speed / 100);
     const adjustedLeft = leftStick! * (speed / 100);
 
-    const motorSpeeds = normalDrive(adjustedRight!, adjustedLeft!);
+    const motorSpeeds = tankMode
+      ? tankDrive(adjustedLeft!, adjustedRight!)
+      : normalDrive(adjustedRight!, adjustedLeft!);
 
     setRightMotor(motorSpeeds.right);
     setLeftMotor(motorSpeeds.left);
@@ -140,7 +139,7 @@ const ControllerPage = () => {
         <LabeledToggle
           checked={connectIsChecked}
           handleToggle={handleConnectionToggle}
-          label={status}
+          label={isConnected ? "Connected" : "Disconnected"}
         />
         <LabeledToggle
           checked={showRobot}
@@ -148,10 +147,28 @@ const ControllerPage = () => {
           label={showRobot ? "Hide Robot" : "Show Robot"}
         />
         <LabeledToggle
-          checked={tankDrive}
-          handleToggle={() => setTankDrive(!tankDrive)}
-          label={tankDrive ? "Tank Drive On" : "Tank Drive Off"}
+          checked={tankMode}
+          handleToggle={() => setTankMode(!tankMode)}
+          label={tankMode ? "Tank Drive On" : "Tank Drive Off"}
         />
+      </Box>
+
+      <Box
+        sx={{
+          display: "flex",
+          backgroundColor: "grey",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "80%",
+          margin: "10px",
+          padding: "10px",
+          borderRadius: "10px",
+        }}
+      >
+        <input
+          value={wsAddress}
+          onChange={(e) => setWSAddress(e.target.value)}
+        ></input>
       </Box>
       {showRobot ? (
         <RobotScene rightMotorSpeed={rightMotor} leftMotorSpeed={leftMotor} />
@@ -189,13 +206,15 @@ const ControllerPage = () => {
       >
         <SettingSlider
           title={"Volume"}
-          value={10}
+          value={volume}
+          defaultValue={10}
           sliderColor="orange"
           setValue={setVolume}
         />
         <SettingSlider
           title={"Speed"}
-          value={50}
+          defaultValue={50}
+          value={speed}
           sliderColor="green"
           setValue={setSpeed}
         />
@@ -215,7 +234,7 @@ const ControllerPage = () => {
         }}
       >
         <Stick variant={"y"} setStickState={setLeftStick} />
-        <Stick variant={tankDrive ? "y" : "x"} setStickState={setRightStick} />
+        <Stick variant={tankMode ? "y" : "x"} setStickState={setRightStick} />
       </Box>
     </Box>
   );

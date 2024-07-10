@@ -5,9 +5,12 @@ import { Typography } from "@mui/material";
 
 interface SettingSliderProps {
   title: string;
+  defaultValue: number;
   value: number;
   sliderColor: string;
   setValue: React.Dispatch<React.SetStateAction<number>>;
+  minValue?: number;
+  maxValue?: number;
 }
 
 const SettingSlider = ({
@@ -15,12 +18,9 @@ const SettingSlider = ({
   value,
   sliderColor,
   setValue,
-}: {
-  title: string;
-  value: number;
-  sliderColor: string;
-  setValue: (value: number) => void;
-}) => {
+  minValue = 0,
+  maxValue = 100,
+}: SettingSliderProps) => {
   function preventHorizontalKeyboardNavigation(event: React.KeyboardEvent) {
     if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
@@ -43,9 +43,13 @@ const SettingSlider = ({
         onChange={handleSliderChange}
         orientation="horizontal"
         defaultValue={value}
+        value={value}
         aria-label="Temperature"
         valueLabelDisplay="auto"
         onKeyDown={preventHorizontalKeyboardNavigation}
+        min={minValue}
+        max={maxValue}
+        step={0.5}
       />
     </Box>
   );
